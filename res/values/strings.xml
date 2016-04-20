@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">OrangeGlove</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="btn_camera_str">Open Camera</string>
+    <string name="btn_setCProfile">Set Palm Profile</string>
+    <string name="title_activity_color_profiler">ColorProfiler</string>
+    <string name="title_activity_hand_recognizer">HandRecognizer</string>
+    <string name="title_activity_trail_activity1">TrailActivity1</string>
+
+</resources>

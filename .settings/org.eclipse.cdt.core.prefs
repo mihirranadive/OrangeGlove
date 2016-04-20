@@ -1,0 +1,9 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/NDKROOT/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/NDKROOT/operation=append
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/NDKROOT/value=/Users/mihir_root/DevKits/android-ndk-r10e
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/PATH/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/PATH/value=/usr/bin\:/bin\:/usr/sbin\:/sbin
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/append=true
+environment/project/cdt.managedbuild.config.gnu.macosx.exe.debug.1870034664/appendContributed=true
