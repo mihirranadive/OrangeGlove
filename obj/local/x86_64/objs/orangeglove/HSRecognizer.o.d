@@ -74,7 +74,8 @@
  /Users/mihir_root/DevKits/OpenCV-android-sdk/sdk/native/jni/include/opencv2/imgcodecs/imgcodecs_c.h \
  /Users/mihir_root/DevKits/OpenCV-android-sdk/sdk/native/jni/include/opencv2/videoio/videoio_c.h \
  /Users/mihir_root/DevKits/OpenCV-android-sdk/sdk/native/jni/include/opencv2/ml.hpp \
- /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/map
+ /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/map \
+ /Users/mihir_root/Documents/MyProjects/Apps/OrangeGlove/jni/HandGestures.cpp
 
 /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/jni.h:
 
@@ -225,3 +226,5 @@
 /Users/mihir_root/DevKits/OpenCV-android-sdk/sdk/native/jni/include/opencv2/ml.hpp:
 
 /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/map:
+
+/Users/mihir_root/Documents/MyProjects/Apps/OrangeGlove/jni/HandGestures.cpp:

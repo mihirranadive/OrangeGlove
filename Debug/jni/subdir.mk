@@ -6,18 +6,21 @@
 CPP_SRCS += \
 ../jni/ColorProfiler.cpp \
 ../jni/HSRecognizer.cpp \
+../jni/HandGestures.cpp \
 ../jni/HandObject.cpp \
 ../jni/MedianRectangles.cpp 
 
 OBJS += \
 ./jni/ColorProfiler.o \
 ./jni/HSRecognizer.o \
+./jni/HandGestures.o \
 ./jni/HandObject.o \
 ./jni/MedianRectangles.o 
 
 CPP_DEPS += \
 ./jni/ColorProfiler.d \
 ./jni/HSRecognizer.d \
+./jni/HandGestures.d \
 ./jni/HandObject.d \
 ./jni/MedianRectangles.d 
 

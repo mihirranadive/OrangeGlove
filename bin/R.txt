@@ -5,13 +5,12 @@ int dimen activity_vertical_margin 0x7f040001
 int drawable ic_launcher 0x7f020000
 int id CPCheck_btn 0x7f080004
 int id CProfilerCameraView 0x7f080003
-int id HSRecognizerCameraView 0x7f080006
-int id action_settings 0x7f080009
+int id HSRecognizerCameraView 0x7f080005
+int id action_settings 0x7f080008
 int id any 0x7f080000
 int id back 0x7f080001
-int id btn_camera 0x7f080008
-int id btn_setCprofile 0x7f080007
-int id content 0x7f080005
+int id btn_camera 0x7f080007
+int id btn_setCprofile 0x7f080006
 int id front 0x7f080002
 int layout activity_color_profiler 0x7f030000
 int layout activity_hand_recognizer 0x7f030001

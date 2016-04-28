@@ -2,6 +2,7 @@ package com.example.orangeglove;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.content.Intent;
 
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
 	
 	
 	public void redirecttoHSRecognizer(View view){
+		Log.i("redirecttoHSRecognizer", "Redirecting to HandRecognizer activity");
 		Intent HS_intent = new Intent(this, HandRecognizer.class);
 		//EditText editText = (EditText) findViewById(R.id.edit_message);
 	    //String message = editText.getText().toString();
@@ -43,7 +45,8 @@ public class MainActivity extends Activity {
 	    startActivity(HS_intent);
 	}
 	
-	public void redirecttoColorProfiler(View view){		
+	public void redirecttoColorProfiler(View view){
+		Log.i("redirecttoColorProfiler", "Redirecting to ColorProfiler activity");
 		Intent CP_intent = new Intent(this, ColorProfiler.class);
 		//EditText editText = (EditText) findViewById(R.id.edit_message);
 	    //String message = editText.getText().toString();

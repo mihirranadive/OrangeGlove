@@ -183,6 +183,7 @@ public class ColorProfiler extends Activity implements CvCameraViewListener2 {
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		mRgba = inputFrame.rgba();
 		mGray = inputFrame.gray();
+		
 		Log.d("OnCameraFrame", "Invoking NDK");
 		invokeNativeColorProfiler(mGray.getNativeObjAddr(),
 				mRgba.getNativeObjAddr(), HSVMat.getNativeObjAddr(),
@@ -229,11 +230,9 @@ public class ColorProfiler extends Activity implements CvCameraViewListener2 {
 			fos_UB.flush();
 			fos_UB.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			Log.e("writeBoundMattoFile", "FileNotFoundException");
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			Log.e("writeBoundMattoFile", "IOException while writing file");
 			e.printStackTrace();
 		}
@@ -241,9 +240,7 @@ public class ColorProfiler extends Activity implements CvCameraViewListener2 {
 		Log.d("writeBoundMattoFile", "Exiting write function");
 	}
 
-	// declaration for NDK calling function.
-	// pass the string parameter to define which path you are going in your
-	// program
+	// declaration for NDK calling function. 
 	public native void invokeNativeColorProfiler(long matAddrGr,
 			long matAddrRgba, long matAddrHSVMat, long mataddreFore,
 			long mataddrBack, long matSc_LBoundMataddr, long matSc_UBoundMataddr);

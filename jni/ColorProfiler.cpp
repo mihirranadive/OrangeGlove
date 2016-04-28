@@ -35,6 +35,7 @@ int getMedianVal(vector<int> values);
 void colorMat_to_HSV_Format();
 void colorMat_to_RGBA_Format();
 void fillMat(Mat &myMat, Scalar scalarArray[], int chan);
+void colorCheck();
 //init functions
 void initMedianRects();
 void init_upAndlowBounds();
@@ -69,7 +70,7 @@ JNIEXPORT void JNICALL Java_com_example_orangeglove_ColorProfiler_invokeNativeCo
 		jlong addrSc_UBoundMat) {
 //JNIEXPORT void JNICALL Java_com_example_orangeglove_MainActivity_invokeNativeCode(){
 
-	__android_log_print(ANDROID_LOG_VERBOSE, "HSRecognizer",
+	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
 			"Hello from NDK src");
 
 	//convert input addresses to workable objects
@@ -92,13 +93,11 @@ JNIEXPORT void JNICALL Java_com_example_orangeglove_ColorProfiler_invokeNativeCo
 				"Path chosen => Color Profiler");
 		//if using the back camera flip the image
 		//if()
-		flip(mRgb, mRgb, 1);
+//		flip(mRgb, mRgb, 1);
 
-		//initMedianRects();
-		//ColorProfiler_HSV();
+		initMedianRects();
+		ColorProfiler_HSV();
 		fillBoundMats();
-
-
 	}
 
 }
@@ -166,13 +165,13 @@ void initMedianRects() {
 //sets lower and upper bounds for our HSV ranges to define a proper bound for each mean calculated
 void initupAndlowBounds() {
 	for (int i = 0; i < SAMPLE_CNT; i++) {
-		lower_lim[i][0] = 6;
+		lower_lim[i][0] = 12;
 		lower_lim[i][1] = 27;
-		lower_lim[i][2] = 75;
+		lower_lim[i][2] = 70;
 
-		upper_lim[i][0] = 12;
-		upper_lim[i][1] = 35;
-		upper_lim[i][2] = 75;
+		upper_lim[i][0] = 120;
+		upper_lim[i][1] = 175;
+		upper_lim[i][2] = 175;
 	}
 }
 
@@ -190,6 +189,7 @@ void ColorProfiler_HSV() {
 		getAvgColorFromMedianRect(profilerRects[i], avgColorVals[i]);
 	}
 
+
 	//calculate bounds for the inrange function
 	calcLowAndUppBounds();
 	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
@@ -200,20 +200,22 @@ void ColorProfiler_HSV() {
 // mats filled in are of the type 7,1, CV_8UC3 and a scalar component which is the average of the
 // scalar values calculated per median rect
 void fillBoundMats() {
-	Scalar scArr[7];
-	for (int i = 0; i < 7; i++)
-		scArr[i] = Scalar(0 + i, 100 + i, 200 + i);
+//	Scalar scArr[7];
+//	for (int i = 0; i < 7; i++)
+//		scArr[i] = Scalar(0 + i, 100 + i, 200 + i);
 
-	if(mSc_LBoundMat.rows == mSc_UBoundMat.rows && mSc_LBoundMat.cols == mSc_UBoundMat.cols){
-//		fillMat(mSc_LBoundMat, lowerBounds, mSc_LBoundMat.channels());
-//		fillMat(mSc_UBoundMat, upperBounds, mSc_LBoundMat.channels());
-		fillMat(mSc_LBoundMat, scArr, mSc_LBoundMat.channels());
-		fillMat(mSc_UBoundMat, scArr, mSc_LBoundMat.channels());
+	if (mSc_LBoundMat.rows == mSc_UBoundMat.rows
+			&& mSc_LBoundMat.cols == mSc_UBoundMat.cols) {
+		fillMat(mSc_LBoundMat, lowerBounds, mSc_LBoundMat.channels());
+		fillMat(mSc_UBoundMat, upperBounds, mSc_LBoundMat.channels());
+//		fillMat(mSc_LBoundMat, scArr, mSc_LBoundMat.channels());
+//		fillMat(mSc_UBoundMat, scArr, mSc_LBoundMat.channels());
+	} else {
+		__android_log_print(ANDROID_LOG_ERROR, "ColorProfiler",
+				"Low/Upper bound Matrice Sizes are different!");
 	}
-	else{
-		__android_log_print(ANDROID_LOG_ERROR, "ColorProfiler", "Low/Upper bound Matrice Sizes are different!");
-	}
-	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler", "filled out both bound matrices manually");
+	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
+			"filled out both bound matrices manually");
 }
 
 //get average HSV values from the median rect. does this for one median rect only
@@ -252,7 +254,11 @@ void getAvgColorFromMedianRect(MedianRectangle medRect, int mean[3]) {
 void calcLowAndUppBounds() {
 	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
 			"setting initial low and up bound per median rectangle");
+	//initialize low/upper bounds from other program.
 	initupAndlowBounds();
+	//check colors are non -ve and within bounds. that is within 0-255 range.
+	colorCheck();
+
 	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
 			"setting final low and up bound per median rectangle");
 	for (int i = 0; i < SAMPLE_CNT; i++) {
@@ -295,14 +301,15 @@ void colorMat_to_HSV_Format() {
 	__android_log_print(ANDROID_LOG_VERBOSE, "ColorProfiler",
 			"Converting mRgba to HSV format");
 	Mat tempMat = Mat();
+	Mat tempmat2 = Mat();
 	mRgb.copyTo(tempMat);
 	//somehow cvtcolor won't work if input and output Mats are the same.
 	cvtColor(mRgb, tempMat, CV_RGBA2RGB);
-	cvtColor(tempMat, mHSV, CV_RGB2HSV);
+	cvtColor(tempMat, tempmat2, CV_RGB2BGR);
+	cvtColor(tempmat2, mHSV, CV_BGR2HSV);
 }
 
 //converts our converted HSV mat to RGBA color format
-//this is not required only added for good measure, just in case.
 void colorMat_to_RGBA_Format() {
 	Mat tempMat = Mat();
 	mRgb.copyTo(tempMat);
@@ -313,14 +320,40 @@ void colorMat_to_RGBA_Format() {
 
 //manually populates a matrix with data values from the passed scalar array
 //updates only a 3 channel matrix
-void fillMat(Mat &myMat, Scalar scalarArray[], int chan){
-	for(int i=0;i<myMat.rows;i++){
-		for(int j=0;j<myMat.cols;j++){
+void fillMat(Mat &myMat, Scalar scalarArray[], int chan) {
+	for (int i = 0; i < myMat.rows; i++) {
+		for (int j = 0; j < myMat.cols; j++) {
 			//medRectMat.data[chans * medRectMat.cols * i + j * chans + 0]); //H extracted
 			//RGB channels
-			myMat.data[chan * myMat.cols * i + j * chan + 0] = scalarArray[i].val[0]; //R
-			myMat.data[chan * myMat.cols * i + j * chan + 1] = scalarArray[i].val[1]; //G
-			myMat.data[chan * myMat.cols * i + j * chan + 2] = scalarArray[i].val[2]; //B
+			myMat.data[chan * myMat.cols * i + j * chan + 0] =
+					scalarArray[i].val[0]; //R
+			myMat.data[chan * myMat.cols * i + j * chan + 1] =
+					scalarArray[i].val[1]; //G
+			myMat.data[chan * myMat.cols * i + j * chan + 2] =
+					scalarArray[i].val[2]; //B
 		}
 	}
+}
+
+void colorCheck() {
+//	threshold values of limits within 0-255 range
+	for (int i = 0; i < SAMPLE_CNT; i++) {
+		for (int j = 0;j < 3; j++) {
+			int lcase = avgColorVals[i][j] - lower_lim[i][j];
+			int ucase = avgColorVals[i][j] + upper_lim[i][j];
+			if(lcase<0){
+				//this will set lower bound to 0
+//				lower_lim[i][j] = avgColorVals[i][j];
+				lower_lim[i][j] = 0;
+				__android_log_print(ANDROID_LOG_WARN, "ColorProfiler", "In ColorCheck. Getting Bad values for LowerLim");
+			}
+			if(ucase>255){
+				//this wil set upper bound to 255
+				upper_lim[i][j] = 255- avgColorVals[i][j];
+//				upper_lim[i][j] =
+				__android_log_print(ANDROID_LOG_WARN, "ColorProfiler", "In ColorCheck. Getting Bad values for UpperLim");
+			}
+		}
+	}
+
 }
