@@ -41,6 +41,7 @@ void detectBoundAndDraw();
 //locally used variables
 vector<Mat> binImgs;
 HandObject myHand;
+HandGestures myGestures;
 //mats
 Mat& backMat = *(Mat*) new Mat();
 Mat& foreMat = *(Mat*) new Mat();
@@ -154,12 +155,21 @@ void detectBoundAndDraw(){
 	myHand.findConvexityDefects();
 	myHand.getfingerCount(foreMat);
 
+
+	if(myHand.isPalmClosed()){
+		//draw pattern into mat
+		myHand.writePatternToMat(pattrnMat);
+		//analyze
+		myGestures.initiateALLFromRecognizedData(pattrnMat, myHand.drawnPatternpts, myHand.fingerChangeTracker, myHand.lastfingerCnt);
+
+	}
+
 	/*------------------Drawing functions---------------------*/
 
 	myHand.drawBoundingRect(mRgba);
 //	myHand.drawMatContours(mRgba, myHand.contours, myHand.indxBigContr, Scalar(0,0,255));
 	//draw Polygon
-//	myHand.drawMatContours(mRgba, myHand.hullsP, myHand.indxBigContr, Scalar(0,0,255));
+	myHand.drawMatContours(mRgba, myHand.hullsP, myHand.indxBigContr, Scalar(0,0,255));
 	//draw CDefects
 //	myHand.drawConvexityDefects(mRgba);
 	myHand.drawFingerTipPoints(mRgba);

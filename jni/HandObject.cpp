@@ -40,6 +40,12 @@ public:
 	//tracking and flow related variables
 	int fingerCount, prevFingerCnt;
 
+	//pattern and tracking vars
+	vector<Point> drawnPatternpts;
+	vector<int> fingerChangeTracker;
+	int lastfingerCnt;
+
+
 	/*--------------------------Constructors and initializations---------------------------*/
 
 	void initializeElements() {
@@ -81,6 +87,8 @@ public:
 	void findBoundingPolygon() {
 		if (indxBigContr >= 0 && !hullsP.empty()) {
 			int epsilon = 18; // degree of acceptability for the Ramer-Douglas-Peucker algo
+			RotatedRect rotRect = minAreaRect(Mat(contours[indxBigContr]));
+			handBoundingRect = rotRect.boundingRect();
 			approxPolyDP(Mat(contours[indxBigContr]), hullsP[indxBigContr],
 					epsilon, true);
 			return;
@@ -124,6 +132,7 @@ public:
 	int getfingerCount(Mat &srcMat) {
 		fingerTips.clear();
 		prevFingerCnt = fingerCount;
+		vector<Point> resPoints;
 		vector<Vec4i>::iterator defIterator = Cdefects[indxBigContr].begin();
 		int i = 0;	//point/defect number indicator
 		while (defIterator != Cdefects[indxBigContr].end()) {
@@ -146,8 +155,25 @@ public:
 			//check for one finger only since Convexity defects are not detected for one finger
 			singleFingerCheck(srcMat); //this assigns finger count appropriately if one finger
 		}
+
+		//remove fingers tips too close to each other
+		for (int i = 0; i < fingerTips.size(); i++) {
+			for (int j = i; j < fingerTips.size(); j++) {
+				if (p2pDist(fingerTips[i], fingerTips[j]) < 10 && i != j) {
+				} else {
+					resPoints.push_back(fingerTips[i]);
+					break; //move on to next fingertip
+				}
+			}
+		}
+		fingerTips.swap(resPoints);
+
 		fingerCount = fingerTips.size();
 
+		if(fingerCount>0){ //since at 0 vector is reset anyway
+			fingerChangeTracker.push_back(fingerCount);
+			lastfingerCnt = fingerCount;
+		}
 		__android_log_print(ANDROID_LOG_INFO, TAG,
 				"Exiting getFingerCount. fingercnt=%d", fingerCount);
 		return fingerCount;
@@ -198,8 +224,9 @@ public:
 	}
 
 	bool isPalmClosed() {
-		if (fingerCount == 0 || fingerTips.size() == 0){
-			__android_log_print(ANDROID_LOG_INFO, TAG, "In isPalmClosed and returning TRUE");
+		if (fingerCount == 0 || fingerTips.size() == 0) {
+			__android_log_print(ANDROID_LOG_INFO, TAG,
+					"In isPalmClosed and returning TRUE");
 			return true;
 		}
 		return false;
@@ -213,15 +240,14 @@ public:
 		__android_log_print(ANDROID_LOG_INFO, TAG,
 				"In RemoveBadCDefects. Cdefect Count=%d", cDef_cnt);
 		int minDistThresh = handBoundingRect.height / 5;
+//		double maxDistThresh = handBoundingRect.height / 1.5; NOT helpful. destroys farthest away points (thumb & pinky)
 		int tol_angleThresh = 100; //degrees by which is a tolerable angle
 		int tol_angleMinThresh = 10;
 		vector<Vec4i> resDefects;
 		int startidx, endidx, faridx;
 		vector<Vec4i>::iterator defIterator = Cdefects[indxBigContr].begin();
 
-
-		minDistThresh +=10;
-		while (defIterator != Cdefects[indxBigContr].end()) { //go over each defect to draw points which will help find the palm center
+		while (defIterator != Cdefects[indxBigContr].end()) {
 			Vec4i& currCd = (*defIterator);
 			int start = currCd[0];
 			int end = currCd[1];
@@ -233,13 +259,17 @@ public:
 			//based on thresholds see if they hold for the start, end and far points
 			double distStart_Far = p2pDist(startPt, farPt);
 			double distFar_End = p2pDist(farPt, endPt);
+			double distStrt_End = p2pDist(startPt, endPt);
 			double angle = getAngle(startPt, farPt, endPt);
 			if (distFar_End > minDistThresh && distStart_Far > minDistThresh
 					&& (angle < tol_angleThresh && angle > tol_angleMinThresh)) {
 				//defect is within thresholds
-				if (startPt.y < (handBoundingRect.height + handBoundingRect.y)
+				if (startPt.y
+						< (handBoundingRect.height + handBoundingRect.y
+								- handBoundingRect.height / 4)
 						&& endPt.y
-								< (handBoundingRect.height + handBoundingRect.y)) {
+								< (handBoundingRect.height + handBoundingRect.y
+										- handBoundingRect.height / 4)) {
 					//defect is within bounding rectangle plus  some threshold
 					resDefects.push_back(currCd);
 				}
@@ -261,7 +291,7 @@ public:
 				"Exiting removeBadCdefects. Cdefect Count=%d", cDef_cnt);
 	}
 
-	//removes Cdefects when fingers join together and the Cdefects are way too close.
+	//removes Cdefects when fingers join together or/and the Cdefects are way too close.
 	//usage maybe redundant in the future depending on usage/requirement
 	void removeJointFingerPts() {
 		cDef_cnt = Cdefects[indxBigContr].size();
@@ -292,6 +322,7 @@ public:
 				}
 			}
 		}
+
 		cDef_cnt = Cdefects[indxBigContr].size();
 		__android_log_print(ANDROID_LOG_VERBOSE, TAG,
 				"Exiting removeJointFingerPts. Cdefect_cnt=%d", cDef_cnt);
@@ -316,6 +347,20 @@ public:
 		}
 	}
 
+	void writePatternToMat(Mat &srcMat) {
+		//write stored pattern to Mat/image
+		for (int i = 0; i < drawnPatternpts.size(); i++) {
+			circle(srcMat, drawnPatternpts[i], 10, Scalar(255, 0, 0), -1, 8);
+		}
+	}
+
+
+	void clearPatternObjects(){
+		fingerChangeTracker.clear();
+		drawnPatternpts.clear();
+		lastfingerCnt = -1;
+	}
+
 	/*------------------------------------------Drawing functions----------------------------------------*/
 
 	//draws filled dots/squares around cdefects at the finger tips
@@ -323,12 +368,14 @@ public:
 		int myfont = FONT_HERSHEY_PLAIN;
 		for (int i = 0; i < fingerTips.size(); i++) {
 			stringstream ss;
-			Point p = fingerTips[i];
-			ss << (i+1);
+			Point pt_this = fingerTips[i];
+			ss << (i + 1);
 			string str = ss.str();
-			putText(srcMat, str, p - Point(0, 20), myfont, 1.2f,
+			putText(srcMat, str, pt_this - Point(0, 20), myfont, 1.2f,
 					Scalar(10, 200, 0), 2, 8);
-			circle(srcMat, p, 10, Scalar(0, 255, 0), -1, 8);
+			circle(srcMat, pt_this, 10, Scalar(0, 255, 0), -1, 8);
+			//store circle point in patternMat
+			drawnPatternpts.push_back(pt_this);
 		}
 
 		__android_log_print(ANDROID_LOG_INFO, TAG,
@@ -337,9 +384,7 @@ public:
 
 	//draws a bouding rectangle around the largest contour, given  a srcMat to draw on
 	void drawBoundingRect(Mat &srcMat) {
-		if (indxBigContr >= 0) {
-			RotatedRect rotRect = minAreaRect(Mat(contours[indxBigContr]));
-			handBoundingRect = rotRect.boundingRect();
+		if (indxBigContr >= 0 && handBoundingRect.area() > 50) {
 			__android_log_print(ANDROID_LOG_VERBOSE, TAG,
 					"In drawBoundingRect. Now drawing Bounding Rectangle.");
 //			checkRectBounds(srcMat);

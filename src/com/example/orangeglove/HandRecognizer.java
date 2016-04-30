@@ -1,5 +1,6 @@
 package com.example.orangeglove;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import android.app.Activity;
+import android.content.Context;
 //import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,8 +32,8 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 	public final static String TAG = "HandRecognizer";
 
 	public final static int SAMPLE_CNT = 7;
-	public static int framecnt = 0;
-	
+	public static int frameskipcnt = 0;
+
 	// opencv vars
 	private Mat currMat, prevMat;
 	private Mat mRgba, mGray, BGRMat, HSVMat, sc_LBoundMat, sc_UBoundMat;
@@ -69,7 +71,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		Log.i(TAG, "in OnCreate Method");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_hand_recognizer);
-		
+
 		// receive the intent from the parent/MainActivity
 		// this will give us the key-value pairs passed from that Activity
 		/*
@@ -85,7 +87,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.HSRecognizerCameraView);
 		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 		mOpenCvCameraView.setCvCameraViewListener(this);
-		
+
 		Log.i(TAG, "Exiting OnCreate Method");
 	}
 
@@ -155,17 +157,19 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		fore = new Mat(height, width, CvType.CV_8UC1);
 		BGRMat = new Mat(height, width, CvType.CV_64FC4);
 		pattrnMat = new Mat(height, width, CvType.CV_8UC3);
+		//fill patternMat with black background
+		pattrnMat.setTo(new Scalar(255,255,255));
 		sc_LBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		sc_UBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		HSVMat = new Mat(height, width, CvType.CV_8UC3);
-		for(int i=0;i<SAMPLE_CNT;i++){
-			scal_LB[i] = new Scalar(0,0,0);
-			scal_UB[i] = new Scalar(0,0,0);
+		for (int i = 0; i < SAMPLE_CNT; i++) {
+			scal_LB[i] = new Scalar(0, 0, 0);
+			scal_UB[i] = new Scalar(0, 0, 0);
 		}
-		
+
 		Log.d("OnCameraFrame", "Getting Bound Vars from file into Mats");
 		getBoundsFromFile();
-		
+
 		Log.d("OnCameraViewStarted",
 				"ALL declarations of Mats and OpenCV Objects done");
 	}
@@ -183,7 +187,8 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		sc_LBoundMat.release();
 		sc_UBoundMat.release();
 		HSVMat.release();
-//		prevMat.release();
+		// prevMat.release();
+		pattrnMat.release();
 		Log.d("OnCameraViewStopped", "ALL releases done");
 	}
 
@@ -191,49 +196,56 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		mRgba = inputFrame.rgba();
 		mGray = inputFrame.gray();
-//		mGray.copyTo(fore);
-//		Imgproc.pyrDown(mRgba, BGRMat);
-		
-		
-		
+		// mGray.copyTo(fore);
+		// Imgproc.pyrDown(mRgba, BGRMat);
 
-		Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2RGB);
-		Log.d("OnCamerFrame", "Invoking NDK");
-		invokeNativeHSRecogCode(mGray.getNativeObjAddr(), mRgba.getNativeObjAddr(), HSVMat.getNativeObjAddr(),
-				fore.getNativeObjAddr(), back.getNativeObjAddr(), sc_LBoundMat.getNativeObjAddr(),
-				sc_UBoundMat.getNativeObjAddr(), pattrnMat.getNativeObjAddr());
-		Log.i("OnCamerFrame", "Back From NDK");	
-	
-		
+		// skip every x frames
+//		int x = 5;
+//		if (frameskipcnt % x == 0) {
+//
+//			Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2RGB);
+//			Log.d("OnCamerFrame", "Invoking NDK");
+//			invokeNativeHSRecogCode(mGray.getNativeObjAddr(),
+//					mRgba.getNativeObjAddr(), HSVMat.getNativeObjAddr(),
+//					fore.getNativeObjAddr(), back.getNativeObjAddr(),
+//					sc_LBoundMat.getNativeObjAddr(),
+//					sc_UBoundMat.getNativeObjAddr(),
+//					pattrnMat.getNativeObjAddr());
+//			Log.i("OnCamerFrame", "Back From NDK");
+//		}
+//		frameskipcnt++;
+//		
+//		if (frameskipcnt > (x*1000))
+//			frameskipcnt = 0;
 		return mRgba;
 	}
 
-	/*---------------------------HELPER Functions and other types---------------------------------*/
+	/*---------------------------HELPER Functions, including read from files and other types---------------------------------*/
 
-	//reads the file into lower and upper bound matrices
-	public void getBoundsFromFile(){
+	// reads the file into lower and upper bound matrices
+	public void getBoundsFromFile() {
 		Log.d("ReadBoundFiletoMat", "Just in Reader function");
 		FileInputStream fistream_LB = null;
 		FileInputStream fistream_UB = null;
 		try {
 			fistream_LB = openFileInput("lowerBound.txt");
 			fistream_UB = openFileInput("upperBound.txt");
-			
+
 			int c;
 			String fstr_LB = "";
-			while( (c = fistream_LB.read()) != -1){
-			   fstr_LB = fstr_LB + Character.toString((char)c);
+			while ((c = fistream_LB.read()) != -1) {
+				fstr_LB = fstr_LB + Character.toString((char) c);
 			}
-			
+
 			int c2;
 			String fstr_UB = "";
-			while( (c2 = fistream_UB.read()) != -1){
-			   fstr_UB = fstr_UB + Character.toString((char)c2);
-			} 
-			
+			while ((c2 = fistream_UB.read()) != -1) {
+				fstr_UB = fstr_UB + Character.toString((char) c2);
+			}
+
 			fillMatFromString(fstr_LB, "LBMat");
 			fillMatFromString(fstr_UB, "UBMat");
-			
+
 			fistream_LB.close();
 			fistream_UB.close();
 		} catch (FileNotFoundException e) {
@@ -243,71 +255,79 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 			Log.e("ReadBoundFiletoMat", "IOException!!!");
 			e.printStackTrace();
 		}
-		Log.d("ReadBoundFiletoMat", "Exiting Reader function. Done reading data from both files");
+		Log.d("ReadBoundFiletoMat",
+				"Exiting Reader function. Done reading data from both files");
 	}
-	
-	//fill matrices with string components gathered from bounding files
-	//each line/row of strArr is a row in the matrix
-	//the Mat is of the type Mat(7,1,CV_8uC3, Scalar(0,0,0)) -- scalar values are updated below from the boundalue files
-	public void fillMatFromString(String fileString, String Matname){		
-		//filter the string which contains the whole mat
-		
-		//remove bad chars and trim
+
+	// fill matrices with string components gathered from bounding files
+	// each line/row of strArr is a row in the matrix
+	// the Mat is of the type Mat(7,1,CV_8uC3, Scalar(0,0,0)) -- scalar values
+	// are updated below from the boundalue files
+	public void fillMatFromString(String fileString, String Matname) {
+		// filter the string which contains the whole mat
+
+		// remove bad chars and trim
 		fileString = fileString.replace('[', ' ').replace(']', ' ');
 		fileString = fileString.replace("\n", "").replace("\r", "");
 		fileString = fileString.replace(" ", "");
 		fileString = fileString.trim();
-		
-//		System.out.println("String temp==>" + fileString);
-		String str_lines[] = fileString.split(";");			
 
-		for(int i=0;i<SAMPLE_CNT;i++){
+		// System.out.println("String temp==>" + fileString);
+		String str_lines[] = fileString.split(";");
+
+		for (int i = 0; i < SAMPLE_CNT; i++) {
 			String str_int[] = str_lines[i].split(",");
-						
-			if(Matname.equals("LBMat") || Matname.contains("LB")){				
-				//translate string vals per row to scalar values
-//				Log.d("fillMatFromString", "filling in Scalar LB");
-				for(int j=0;j<3;j++){
-//					System.out.println("curr num==>>" + str_int[j]);
+
+			if (Matname.equals("LBMat") || Matname.contains("LB")) {
+				// translate string vals per row to scalar values
+				// Log.d("fillMatFromString", "filling in Scalar LB");
+				for (int j = 0; j < 3; j++) {
+					// System.out.println("curr num==>>" + str_int[j]);
 					scal_LB[i].val[j] = Double.parseDouble(str_int[j]);
 				}
 				scal_LB[i].val[3] = 0;
-				//fill LB mat with scalar values
+				// fill LB mat with scalar values
 				int chan = sc_LBoundMat.channels();
-				//scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j * chan + 0]; //R
-//				Log.d("fillMatFromString", "filling in Mat using Put LB");
+				// scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j
+				// * chan + 0]; //R
+				// Log.d("fillMatFromString", "filling in Mat using Put LB");
 				sc_LBoundMat.put(i, 0, scal_LB[i].val);
-			}
-			else if(Matname.equals("UBMat") || Matname.contains("UB")){
-				//translate string vals per row to scalar values
-//				Log.d("fillMatFromString", "filling in Scalar UB");
-				for(int j=0;j<3;j++){
-//					System.out.println("curr num==>>" + str_int[j]);
+			} else if (Matname.equals("UBMat") || Matname.contains("UB")) {
+				// translate string vals per row to scalar values
+				// Log.d("fillMatFromString", "filling in Scalar UB");
+				for (int j = 0; j < 3; j++) {
+					// System.out.println("curr num==>>" + str_int[j]);
 					scal_UB[i].val[j] = Double.parseDouble(str_int[j]);
 				}
 				scal_UB[i].val[3] = 0;
-				//fill LB mat with scalar values
+				// fill LB mat with scalar values
 				int chan = sc_LBoundMat.channels();
-				//scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j * chan + 0]; //R
-//				Log.d("fillMatFromString", "filling in Mat using Put UB");				
-				sc_UBoundMat.put(i, 0, scal_UB[i].val);			
+				// scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j
+				// * chan + 0]; //R
+				// Log.d("fillMatFromString", "filling in Mat using Put UB");
+				sc_UBoundMat.put(i, 0, scal_UB[i].val);
 			}
 		}
-		
-		if(Matname.equals("LBMat") || Matname.contains("LB"))
+
+		if (Matname.equals("LBMat") || Matname.contains("LB"))
 			System.out.println("LBMat=>>" + sc_LBoundMat.dump());
-		else if(Matname.equals("UBMat") || Matname.contains("UB"))
+		else if (Matname.equals("UBMat") || Matname.contains("UB"))
 			System.out.println("UBMat=>>" + sc_UBoundMat.dump());
-		
+
 	}
 	
+	void readImageFilePath(){
+		
+		
+	}
+
 	// declaration for NDK calling function.
 	// pass the string parameter to define which path you are going in your
 	// program. it can be either ColorProfiler or HSRecognizer
 	public native void invokeNativeHSRecogCode(long matAddrGr,
 			long matAddrRgba, long matAddrHSVMat, long mataddreFore,
-			long mataddrBack, long matSc_LBoundMataddr, long matSc_UBoundMataddr, long pattrnMataddr);
-
+			long mataddrBack, long matSc_LBoundMataddr,
+			long matSc_UBoundMataddr, long pattrnMataddr);
 
 	static {
 		System.loadLibrary("orangeglove");
