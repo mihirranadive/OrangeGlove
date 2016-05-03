@@ -5,8 +5,27 @@
  /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/sys/cdefs_elf.h \
  /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/api-level.h \
  /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/log.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/asset_manager.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/sys/types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/stdint.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/machine/wchar_limits.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/int-ll64.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/bitsperlong.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/bitsperlong.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/posix_types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/stddef.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/compiler.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/posix_types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/posix_types_64.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/posix_types.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/sys/sysmacros.h \
+ /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/asset_manager_jni.h \
  /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/iostream \
  /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/vector \
+ /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bitset \
  /Users/mihir_root/Documents/MyProjects/Apps/OrangeGlove/jni/HandObject.cpp \
  /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/stdlib.h \
  /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/alloca.h \
@@ -87,9 +106,47 @@
 
 /Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/log.h:
 
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/asset_manager.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/sys/types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/stdint.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/machine/wchar_limits.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/int-ll64.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/bitsperlong.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/bitsperlong.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/posix_types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/stddef.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/linux/compiler.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/posix_types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm/posix_types_64.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/asm-generic/posix_types.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/sys/sysmacros.h:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/platforms/android-21/arch-x86_64/usr/include/android/asset_manager_jni.h:
+
 /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/iostream:
 
 /Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/vector:
+
+/Users/mihir_root/DevKits/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bitset:
 
 /Users/mihir_root/Documents/MyProjects/Apps/OrangeGlove/jni/HandObject.cpp:
 

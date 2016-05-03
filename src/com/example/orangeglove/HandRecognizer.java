@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -11,14 +12,20 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.Scalar;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 //import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +39,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 	public final static String TAG = "HandRecognizer";
 
 	public final static int SAMPLE_CNT = 7;
+	public final static int MATCHT_CNT = 7;// # of templates to compare against
 	public static int frameskipcnt = 0;
 
 	// opencv vars
@@ -39,8 +47,14 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 	private Mat mRgba, mGray, BGRMat, HSVMat, sc_LBoundMat, sc_UBoundMat;
 	private Mat pattrnMat;
 	private Mat fore, back;
+	private Mat[] matchTemplates = new Mat[MATCHT_CNT]; // stores all
+														// match/compare images
 	private Scalar scal_LB[] = new Scalar[SAMPLE_CNT];
 	private Scalar scal_UB[] = new Scalar[SAMPLE_CNT];
+	static AssetManager asm;
+
+	public long addrMats[] = new long[MATCHT_CNT];// stores each template Mats'
+													// native address
 
 	/*---------------------------------------OPENCV INIT FUNCTIONS--------------------------*/
 
@@ -72,17 +86,9 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_hand_recognizer);
 
-		// receive the intent from the parent/MainActivity
-		// this will give us the key-value pairs passed from that Activity
-		/*
-		 * Intent intent = getIntent(); String message =
-		 * intent.getStringExtra(MainActivity.EXTRA_MESSAGE); TextView textView
-		 * = new TextView(this); textView.setTextSize(40);
-		 * textView.setText(message);
-		 * 
-		 * RelativeLayout layout = (RelativeLayout) findViewById(R.id.content);
-		 * layout.addView(textView);
-		 */
+		// set up and copy assets into internal for easy NDK read operations
+		Log.v(TAG, "getting assets");
+		asm = getAssets();
 
 		mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.HSRecognizerCameraView);
 		mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -127,9 +133,6 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 
 	/*-------------------------------------ACTIVITY INTERACTIONS----------------------------------*/
 
-	// public void myfun_FOO()
-	// {}
-
 	/*---------------------------ALL OPENCV and CAMERA interactions---------------------------------*/
 
 	@Override
@@ -157,18 +160,27 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		fore = new Mat(height, width, CvType.CV_8UC1);
 		BGRMat = new Mat(height, width, CvType.CV_64FC4);
 		pattrnMat = new Mat(height, width, CvType.CV_8UC3);
-		//fill patternMat with black background
-		pattrnMat.setTo(new Scalar(255,255,255));
+		// fill patternMat with black background
+		pattrnMat.setTo(new Scalar(255, 255, 255));
 		sc_LBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		sc_UBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		HSVMat = new Mat(height, width, CvType.CV_8UC3);
+
+		// set scalar Mats
 		for (int i = 0; i < SAMPLE_CNT; i++) {
 			scal_LB[i] = new Scalar(0, 0, 0);
 			scal_UB[i] = new Scalar(0, 0, 0);
 		}
+		// set template Mats
+		for (int i = 0; i < MATCHT_CNT; i++) {
+			matchTemplates[i] = new Mat(600, 402, CvType.CV_8UC3);
+		}
 
 		Log.d("OnCameraFrame", "Getting Bound Vars from file into Mats");
 		getBoundsFromFile();
+
+		Log.d("OnCameraFrame", "saveTemplates To Mats");
+		saveTemplatesToMats();
 
 		Log.d("OnCameraViewStarted",
 				"ALL declarations of Mats and OpenCV Objects done");
@@ -189,6 +201,9 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		HSVMat.release();
 		// prevMat.release();
 		pattrnMat.release();
+		for (int i = 0; i < MATCHT_CNT; i++) {
+			matchTemplates[i].release();
+		}
 		Log.d("OnCameraViewStopped", "ALL releases done");
 	}
 
@@ -200,22 +215,27 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		// Imgproc.pyrDown(mRgba, BGRMat);
 
 		// skip every x frames
-//		int x = 5;
-//		if (frameskipcnt % x == 0) {
-//
-//			Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2RGB);
-//			Log.d("OnCamerFrame", "Invoking NDK");
-//			invokeNativeHSRecogCode(mGray.getNativeObjAddr(),
-//					mRgba.getNativeObjAddr(), HSVMat.getNativeObjAddr(),
-//					fore.getNativeObjAddr(), back.getNativeObjAddr(),
-//					sc_LBoundMat.getNativeObjAddr(),
-//					sc_UBoundMat.getNativeObjAddr(),
-//					pattrnMat.getNativeObjAddr());
-//			Log.i("OnCamerFrame", "Back From NDK");
-//		}
-//		frameskipcnt++;
-//		
-//		if (frameskipcnt > (x*1000))
+		int x = 5;
+		if (frameskipcnt % x == 0) {
+
+			Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2RGB);
+			Log.d("OnCamerFrame", "Invoking NDK");
+			invokeNativeHSRecogCode(mGray.getNativeObjAddr(),
+					mRgba.getNativeObjAddr(), HSVMat.getNativeObjAddr(),
+					fore.getNativeObjAddr(), back.getNativeObjAddr(),
+					sc_LBoundMat.getNativeObjAddr(),
+					sc_UBoundMat.getNativeObjAddr(),
+					pattrnMat.getNativeObjAddr(), addrMats);
+			Log.i("OnCamerFrame", "Back From NDK");
+		}
+		frameskipcnt++;
+
+		// try to display template image from Mat
+		
+		
+		Imgproc.resize(matchTemplates[2], mRgba, mRgba.size());
+
+//		if (frameskipcnt > (x * 1000))
 //			frameskipcnt = 0;
 		return mRgba;
 	}
@@ -287,7 +307,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 				}
 				scal_LB[i].val[3] = 0;
 				// fill LB mat with scalar values
-				int chan = sc_LBoundMat.channels();
+				// int chan = sc_LBoundMat.channels();
 				// scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j
 				// * chan + 0]; //R
 				// Log.d("fillMatFromString", "filling in Mat using Put LB");
@@ -301,7 +321,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 				}
 				scal_UB[i].val[3] = 0;
 				// fill LB mat with scalar values
-				int chan = sc_LBoundMat.channels();
+				// int chan = sc_LBoundMat.channels();
 				// scalarArray[i].val[0] = myMat.data[chan * myMat.cols * i + j
 				// * chan + 0]; //R
 				// Log.d("fillMatFromString", "filling in Mat using Put UB");
@@ -315,10 +335,70 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 			System.out.println("UBMat=>>" + sc_UBoundMat.dump());
 
 	}
-	
-	void readImageFilePath(){
-		
-		
+
+	// save template image files to Mats and stores each Mat native address into
+	// an array
+	private void saveTemplatesToMats() {
+		String[] filesNames;
+		String thisFname = "";
+		InputStream inStream;
+//		int imgcnt = 1;
+		try {
+			Log.v(TAG, "In cpyAssetstoInternal. Getting assets List");
+			filesNames = asm.list("ptImgs");
+//			Log.v(TAG, "filename[0]==" + filesNames[0]);
+
+			for (int i = 0; i < MATCHT_CNT; i++) {
+				thisFname = "ptImgs/img" + (i+1) + ".png";
+				
+//				Log.v(TAG, "This Filename=" + thisFname);
+				inStream = asm.open(thisFname);
+
+				int size = inStream.available();
+
+//				Log.v(TAG, "size of inStream=" + size);
+				byte[] buffer = new byte[size];
+
+				inStream.read(buffer);
+
+//				String text = new String(buffer);
+//				Log.v(TAG, "buffer==" + text);
+
+				inStream.close();
+//				if (buffer != null && matchTemplates[i] != null) {
+//					Log.i(TAG, "Buff is Not NULL");
+//					Log.i(TAG, "MatRows= " + matchTemplates[i].rows()
+//							+ ",MatCols=" + matchTemplates[i].cols());
+//				}
+				Bitmap bmp = BitmapFactory.decodeByteArray(buffer, 0,
+						buffer.length);
+//				Log.i(TAG, "Got BitMapfrom buffer");
+				matchTemplates[i] = new Mat(bmp.getHeight(), bmp.getWidth(),
+						CvType.CV_8UC3);
+//				Log.i(TAG, "Set the Mat!");
+				Bitmap myBitmap32 = bmp.copy(Bitmap.Config.ARGB_8888, true);
+//				Log.i(TAG, "Got BitMapCopy for bitmaptomat");
+				Utils.bitmapToMat(myBitmap32, matchTemplates[i]);
+//				Log.i(TAG, "Done BitmaptoMat");
+
+				// not required since done to RGBA by default
+				// Imgproc.cvtColor(matchTemplates[0], matchTemplates[0],
+				// Imgproc.COLOR_BGR2RGB,4);
+
+				// Log.i(TAG, "MatchTemplateMat=>" + matchTemplates[0].dump());
+				// CANNOT DUMP PNG into a string. program fails
+//				Log.i(TAG, "i=" + i + "MatRows=" + matchTemplates[i].rows()
+//						+ ",MatCols=" + matchTemplates[i].cols());
+				// fill in the native addresses
+				addrMats[i] = matchTemplates[i].getNativeObjAddr();
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	// declaration for NDK calling function.
@@ -327,7 +407,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 	public native void invokeNativeHSRecogCode(long matAddrGr,
 			long matAddrRgba, long matAddrHSVMat, long mataddreFore,
 			long mataddrBack, long matSc_LBoundMataddr,
-			long matSc_UBoundMataddr, long pattrnMataddr);
+			long matSc_UBoundMataddr, long pattrnMataddr, long addrTemplatesMats[]);
 
 	static {
 		System.loadLibrary("orangeglove");

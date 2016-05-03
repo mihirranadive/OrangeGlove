@@ -7,7 +7,7 @@ include /Users/mihir_root/DevKits/OpenCV-android-sdk/sdk/native/jni/OpenCV.mk
 # Here we give our module name and source file(s)
 LOCAL_MODULE    := orangeglove
 LOCAL_SRC_FILES := HSRecognizer.cpp ColorProfiler.cpp
-LOCAL_LDLIBS +=  -llog -ldl
+LOCAL_LDLIBS +=  -llog -ldl -landroid
  
 include $(BUILD_SHARED_LIBRARY)
 
