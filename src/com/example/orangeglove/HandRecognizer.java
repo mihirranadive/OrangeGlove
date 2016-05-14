@@ -161,7 +161,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		BGRMat = new Mat(height, width, CvType.CV_64FC4);
 		pattrnMat = new Mat(height, width, CvType.CV_8UC3);
 		// fill patternMat with black background
-		pattrnMat.setTo(new Scalar(255, 255, 255));
+		pattrnMat.setTo(new Scalar(0, 0, 0));
 		sc_LBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		sc_UBoundMat = new Mat(7, 1, CvType.CV_8UC4, new Scalar(0, 0, 0));
 		HSVMat = new Mat(height, width, CvType.CV_8UC3);
@@ -215,7 +215,7 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		// Imgproc.pyrDown(mRgba, BGRMat);
 
 		// skip every x frames
-		int x = 5;
+		int x = 1;
 		if (frameskipcnt % x == 0) {
 
 			Imgproc.cvtColor(mRgba, mRgba, Imgproc.COLOR_RGBA2RGB);
@@ -233,10 +233,11 @@ public class HandRecognizer extends Activity implements CvCameraViewListener2 {
 		// try to display template image from Mat
 		
 		
-		Imgproc.resize(matchTemplates[2], mRgba, mRgba.size());
+//		Imgproc.resize(matchTemplates[2], mRgba, mRgba.size());
 
-//		if (frameskipcnt > (x * 1000))
-//			frameskipcnt = 0;
+		if (frameskipcnt > (x * 1000))
+			frameskipcnt = 0;
+		
 		return mRgba;
 	}
 

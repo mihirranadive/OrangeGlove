@@ -81,7 +81,7 @@ JNIEXPORT void JNICALL Java_com_example_orangeglove_HandRecognizer_invokeNativeH
 	mScalarLBoundMat = *(Mat*) addrSc_LBoundMat;
 	mScalarUBoundMat = *(Mat*) addrSc_UBoundMat;
 	pattrnMat = *(Mat*) addr_pattrnMat;
-	string codepath = "HSRecognizer11";
+	string codepath = "HSRecognizer";
 
 		__android_log_print(ANDROID_LOG_INFO, "HSRecognizer",
 				"In NDK. after assigning vars. NDKCallCnt=%d", NDKCallCnt++);
@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL Java_com_example_orangeglove_HandRecognizer_invokeNativeH
 	for (int i = 0; i < 7; i++)
 	        templateMats[i] = *(Mat*)env->CallLongMethod(env->GetObjectArrayElement(bufimgsArray, i), getPtrMethod);
 
-	Size sz(mRgba.cols,mRgba.rows);
+//	Size sz(mRgba.cols,mRgba.rows);
 	__android_log_print(ANDROID_LOG_INFO, "HSRecognizer",
 						"Resizing mat to for mRgba");
 //	resize(templateMats[3], mRgba, sz);
@@ -205,13 +205,18 @@ void detectBoundAndDraw() {
 	myHand.findConvexityDefects();
 	myHand.getfingerCount(foreMat);
 
+	myHand.writePatternToMat(mRgba);
 	if (myHand.isPalmClosed()) {
 		//draw pattern into mat
 		myHand.writePatternToMat(pattrnMat);
+		myHand.clearPatternObjects();//resets drawn pattern
 		//analyze
 		myGestures.initiateALLFromRecognizedData(pattrnMat,
 				myHand.drawnPatternpts, myHand.fingerChangeTracker,
 				myHand.lastfingerCnt);
+		myGestures.printAllValues();
+		myGestures.compareAndgetHistogramValues(templateMats);
+		myGestures.clearALL();
 
 	}
 
